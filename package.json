@@ -1,0 +1,17 @@
+{
+  "name": "data",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "author": "",
+  "license": "ISC",
+  "dependencies": {
+    "bsv": "npm:bsv@^1.5.3",
+    "bsv-purse": "^0.1.1",
+    "bsv2": "npm:bsv@^2.0.6",
+    "superagent": "^5.2.2"
+  }
+}
