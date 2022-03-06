@@ -1,0 +1,47 @@
+{
+    "version": 8,
+    "compilerVersion": "1.9.0+commit.db1a6aa",
+    "contract": "P2PKH",
+    "md5": "ab654b63d7d64eccaf1b2875fe2b51d6",
+    "structs": [],
+    "library": [],
+    "alias": [
+        {
+            "name": "PubKeyHash",
+            "type": "Ripemd160"
+        }
+    ],
+    "abi": [
+        {
+            "type": "function",
+            "name": "unlock",
+            "index": 0,
+            "params": [
+                {
+                    "name": "sig",
+                    "type": "Sig"
+                },
+                {
+                    "name": "pubKey",
+                    "type": "PubKey"
+                }
+            ]
+        },
+        {
+            "type": "constructor",
+            "params": [
+                {
+                    "name": "pubKeyHash",
+                    "type": "Ripemd160"
+                }
+            ]
+        }
+    ],
+    "stateProps": [],
+    "buildType": "release",
+    "file": "",
+    "asm": "OP_0 $pubKeyHash OP_NIP OP_OVER OP_HASH160 OP_OVER OP_EQUALVERIFY OP_3DUP OP_DROP OP_CHECKSIG OP_NIP OP_NIP OP_NIP",
+    "hex": "00<pubKeyHash>7778a978886f75ac777777",
+    "sources": [],
+    "sourceMap": []
+}

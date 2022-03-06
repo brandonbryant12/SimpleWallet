@@ -9,9 +9,10 @@
   "author": "",
   "license": "ISC",
   "dependencies": {
-    "bsv": "npm:bsv@^1.5.3",
+    "bsv": "npm:bsv@^1.5.6",
     "bsv-purse": "^0.1.1",
     "bsv2": "npm:bsv@^2.0.6",
+    "scryptlib": "^0.13.1",
     "superagent": "^5.2.2"
   }
 }
