@@ -1,59 +1,40 @@
+
 require('dotenv').config();
 const scryptlib = require('scryptlib');
 const { getUtxos, broadcast } = require('../util/utils');
-const { toHex, Ripemd160, Sig, PubKey, signTx, bsv } = scryptlib;
+const { toHex, Ripemd160, Sig, PubKey, signTx, bsv, PubKeyHash, buildContractClass } = scryptlib;
+const demoContract = require('./contracts/p2pkh_release_desc.json');
 
-const pk = new bsv.PrivateKey(process.env.privateKey);
-const publicKey = pk.publicKey;
-const pubKeyHash = bsv.crypto.Hash.sha256ripemd160(publicKey.toBuffer());
-const contractDescription = require('./contracts/p2pkh_release_desc.json');
+const privateKey = new bsv.PrivateKey(process.env.privateKey);
+const publicKey = privateKey.publicKey;
+const pkh = bsv.crypto.Hash.sha256ripemd160(publicKey.toBuffer());
 
-const sigHashType = bsv.crypto.Signature.SIGHASH_ALL | bsv.crypto.Signature.SIGHASH_FORKID;
-const P2PKHContractClass = scryptlib.buildContractClass(contractDescription);
-const instance = new P2PKHContractClass(new Ripemd160(toHex(pubKeyHash)));
+const DemoP2PKH = buildContractClass(demoContract);
+const demo = new DemoP2PKH(new PubKeyHash(toHex(pkh)));
 
-const lockingScript = instance.lockingScript;
-const lockingScriptASM = lockingScript.toASM();
-const lockingScriptHex = lockingScript.toHex();
-
-console.log('locking script', lockingScriptHex)
-
-//Spending tx
 const utxo = {
-  txId: 'd81525e2d305b4bc53c1bf99abef580b0872ae92b0f0c6405b78acdfdddc3ac9',
+  txId: '60022bc372eee03a94df94ed03e8a349ef0e9601f18ac8f3fb25149d53c0b8f2',
   outputIndex: 0,
-  script: '',   // placeholder
-  satoshis: 9921
+  script: demo.lockingScript,
+  satoshis: 900
 };
 
-const tx = newTx(inputSatoshis);
-const sig = signTx(tx, pk, instance.lockingScript, inputSatoshis);
-const txContext = { inputSatoshis, tx };
-instance.txContext = txContext;
-const unlockingScriptASM = [toHex(sig), toHex(publicKey)].join(' ');
+const tx = new bsv.Transaction().from(utxo)
+const context = { tx, inputIndex: 0, inputSatoshis: utxo.satoshis }
+tx.addOutput(new bsv.Transaction.Output({
+    script: bsv.Script(privateKey.toAddress()),
+    satoshis: utxo.satoshis - 100,
+}));
+const sig = signTx(tx, privateKey, demo.lockingScript, context.inputSatoshis)
+const unlockingFunction = demo.unlock(new Sig(toHex(sig)), new PubKey(toHex(publicKey)))
 
-if(!instance.run_verify(unlockingScriptASM)) throw new Error('invalid unlocking');
-if(!instance.unlock(sig, new PubKey(toHex(publicKey))).verify(txContext)) throw new Error('invalid sig');
+if(unlockingFunction.verify(context).success !== true) throw new Error('Invalid signature');
 
-( async () => { 
-   const unlockingScript = bsv.Script(instance.unlock(sig, new PubKey(toHex(publicKey))).toHex());
-   const signature = bsv.Transaction.Signature({
-       publicKey,
-       prevTxId: utxo.txId,
-       outputIndex: utxo.outputIndex,
-       inputIndex: 0,
-       signature: bsv.crypto.Signature.fromTxFormat(Buffer.from(sig.value,'hex')),
-       sigtype: 65,
-   });
-   signature.nhashtype = 65;
-   console.log(bsv.crypto.Signature.fromTxFormat(Buffer.from(sig.value,'hex')))
-   if(!tx.verifySignature(signature, publicKey, 0, unlockingScript, bsv.crypto.BN.fromNumber(inputSatoshis), 65)) throw new Error('invalid sig')
+const unlockingScript = unlockingFunction.toScript();
+tx.inputs[0].setScript(unlockingScript);
 
-    tx.addOutput(new bsv.Transaction.Output({
-        script: instance.lockingScript,
-        satoshis: inputSatoshis - tx._estimateFee(),
-    }));
-
-    // const result = await broadcast(tx.toString());
-    // console.log(result)
+ ( async () => { 
+    const result = await broadcast(tx.toString());
+    console.log(tx.toString())
   })();
+  
