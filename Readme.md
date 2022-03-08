@@ -2,8 +2,10 @@
 Basic wallet examples and tools using Bitcoin SV libraries 
 
 ## .env
-`privateKey="yourPrivateKeyHere"`
-`handcashAuthToken="authToken"` 
+```
+privateKey="yourPrivateKeyHere"
+handcashAuthToken="authToken"
+```
 
 https://app.handcash.io/#/authorizeApp?appId=60a40ae9b23d510bb89a5c3d
 
