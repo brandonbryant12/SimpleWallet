@@ -32,3 +32,11 @@ example of creating a non-standard output and spending the output.  Compile `.sc
 
 `node scrypt/deployAndSpendContract.js`
 
+#### Escrow
+
+Create an escrow contract
+`node scrypt/escrow/createEscrow.js`
+
+Split escrow in a tie
+`node scrypt/escrow/resolveEscrowInTie.js`
+
