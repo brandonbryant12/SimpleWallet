@@ -48,7 +48,7 @@ const escrow = new Escrow(new PubKeyHash(toHex(alicePkh)), new PubKeyHash(toHex(
 
 ( async () => {
 
-  console.log(await fundPrivateKey(escrowAmount + fee, escrowPrivateKey));
+  await fundPrivateKey(escrowAmount + fee, escrowPrivateKey);
   let availableUtxos = await getUtxos(escrowPrivateKey.toAddress().toString());
   const { utxos, missingAmount}  = availableUtxos.reduce((obj, utxo) => {
       if(obj.missingAmount > 0) {
