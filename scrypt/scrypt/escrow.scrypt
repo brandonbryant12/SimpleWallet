@@ -1,0 +1,85 @@
+/**
+A simple Bitcoin escrow contract 
+An amount X is locked with a transaction.
+We have three scenarios which can unlock the script.
+A: Alice, B: Bob, E: Escrow, P: Public Key
+Scenario 1: PA + PB
+Alice and Bob have to sign. There will be two new outputs (50/50).
+Scenario 2: PA + PE + Hash 1
+Alice and Escrow have to sign and use the secret 1. Alice gets the output.
+Scenario 3: PB + PE + Hash 2
+Bob and Escrow have to sign and use the secret 2. Bob gets the output.
+**/
+
+
+contract SimpleEscrow {
+    PubKeyHash pubKeyHashA;
+    PubKeyHash pubKeyHashB;
+    PubKeyHash pubKeyHashE;
+    Sha256 hash1;
+    Sha256 hash2;
+
+    function split(int amount, SigHashPreimage txPreimage,
+        PubKeyHash changePKH, int changeAmount) : bool {
+        // split amount, both new outputs get the same amount
+        bytes scriptA = Utils.buildPublicKeyHashScript(this.pubKeyHashA);
+        bytes outputA = Utils.buildOutput(scriptA, amount / 2);
+
+        bytes scriptB = Utils.buildPublicKeyHashScript(this.pubKeyHashB);
+        bytes outputB = Utils.buildOutput(scriptB, amount / 2);
+
+        bytes scriptChange = Utils.buildPublicKeyHashScript(changePKH);
+        bytes outputChange = Utils.buildOutput(scriptChange, changeAmount);
+
+        bytes outputs = outputA + outputB + outputChange;
+
+        return (hash256(outputs) == SigHash.hashOutputs(txPreimage));
+    }
+
+    function spend(int amount, SigHashPreimage txPreimage, PubKeyHash pubKeyHash,
+        PubKeyHash changePKH, int changeAmount) : bool {
+        bytes script = Utils.buildPublicKeyHashScript(pubKeyHash);
+        bytes output = Utils.buildOutput(script, amount);
+
+        bytes scriptChange = Utils.buildPublicKeyHashScript(changePKH);
+        bytes outputChange = Utils.buildOutput(scriptChange, changeAmount);
+
+        bytes outputs = output + outputChange;
+        return (hash256(outputs) == SigHash.hashOutputs(txPreimage));
+    }
+
+    public function unlock(SigHashPreimage txPreimage, PubKey pubKey1, Sig sig1, PubKey pubKey2, Sig sig2, bytes secret,
+        PubKeyHash changePKH, int changeAmount) {
+        bool status = false;
+
+        SigHashType sigHashType = SigHash.ANYONECANPAY | SigHash.ALL | SigHash.FORKID;
+        // this ensures the preimage is for the current tx
+        require(Tx.checkPreimageSigHashType(txPreimage, sigHashType));
+
+        int amount = SigHash.value(txPreimage);
+
+        require(checkSig(sig1, pubKey1));
+        require(checkSig(sig2, pubKey2));
+
+        if (hash160(pubKey1) == this.pubKeyHashA) {
+            if (hash160(pubKey2) == this.pubKeyHashB) {
+                require(this.split(amount, txPreimage, changePKH, changeAmount));
+                status = true;
+            }
+            else if (hash160(pubKey2) == this.pubKeyHashE) {
+                require(sha256(secret) == this.hash1);
+                require(this.spend(amount, txPreimage, this.pubKeyHashA, changePKH, changeAmount));
+                status = true;
+            }
+        }
+        else if (hash160(pubKey1) == this.pubKeyHashB) {
+            if (hash160(pubKey2) == this.pubKeyHashE) {
+                require(sha256(secret) == this.hash2);
+                require(this.spend(amount, txPreimage, this.pubKeyHashB, changePKH, changeAmount));
+                status = true;
+            }
+        }
+
+        require(status);
+    }
+}
