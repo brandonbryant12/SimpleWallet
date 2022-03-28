@@ -1,5 +1,5 @@
 require('dotenv').config();
-const PayToPublicKeyHashOwner = require('./customLocks/p2pkhLock');
+const PayToPublicKeyHashOwner = require('./customOwners/p2pkhLock');
 const Run = require('run-sdk');
 const { LocalPurse } = Run.plugins;
 const bsv = require('bsv');

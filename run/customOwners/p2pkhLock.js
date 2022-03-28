@@ -30,6 +30,7 @@ class PayToPublicKeyHashOwner {
 
   async sign (rawtx, parents, locks) {
     const unlockingTx = bsv.Transaction(rawtx);
+    console.log(unlockingTx)
     unlockingTx.inputs
     .forEach((input, n) => {
       if(locks[n] && locks[n].lockingScript === this.contractInstance.lockingScript.toHex()){
